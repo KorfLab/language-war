@@ -3,7 +3,7 @@ language-war
 
 Comparing various languages for building bioinformatics applications
 
-## Task
+## Intent
 
 Write the following in each language:
 
@@ -32,23 +32,21 @@ Which languages?
 	- `ce1pct.gff3.gz` 1% of the C. elegans genome in GFF3 (for ref, not used)
 	- `ce.db` a sqlite database of the files above
 	- `hmm.json` a simple HMM parameter file
-- `src` each directory is named with a language and other tags
-	- `00python-start-here` pure python
-	- `perl-oldschool` for historical perspective
-	- `c-klib` a C solution based partly on klib
+- `00python-start-here` pure python to inspire other solutions
+- `c-klib` a C solution based partly on klib
 
 ## 00python3-start-here
 
-Other project should look sort of similar to this. There is no need to describe
-them in great detail since they are supposed to look like the python version.
+Other languages should have programs with similar names and produce identical
+output. There should be a `run.sh` that builds and runs the programs.
 
 - `run.sh` use this to run all programs (then `rm *.out`)
-- `mylib.py` the shared library for FASTA files
-- `dust.py` nucleotide complexity filter
-- `kmers.py` kmer frequencies
-- `genotype.py` heterozygous probabilities
-- `exons.py` exon sequences
-- `params.py` hmm parameters
+- `mylib.py` contains the FASTA iterator
+- `dust.py` masks low complexity sequence
+- `kmers.py` counts kmers
+- `genotype.py` simulates genotyping by sequencing
+- `exons.py` reports exon sequences
+- `params.py` reads a JSON
 
 
 ## c-klib
