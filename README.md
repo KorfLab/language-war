@@ -19,9 +19,9 @@ For inspiration, see the `00python3-start-here` solution.
 Which languages?
 
 - Modern high performance: D, Go, Rust, Zig
-- Less common but maybe interested: Crystal, Mojo, Nim, Object Pascal, V
+- Less common but maybe interested: Crystal, Mojo, Nim, V
 - Probably not interested
-	- JIT-based: C#, Java, Javascript, Julia, Kotlin, LuaJIT, Scala
+	- JIT-based: C#, Java, Javascript, Julia, LuaJIT
 	- Interpreted: Lua, PHP, Raku, Ruby
 
 ## Manifest
@@ -80,9 +80,5 @@ programs/
 	exons/
 	params/
 ```
-
-## perl-oldschool
-
-To be filled in by Ian
 
 ## next languages...
