@@ -16,6 +16,14 @@ Write the following in each language:
 
 For inspiration, see the `00python3-start-here` solution.
 
+Which languages?
+
+- Modern high performance: D, Go, Rust, Zig
+- Less common but maybe interested: Crystal, Mojo, Nim, Object Pascal, V
+- Probably not interested
+	- JIT-based: C#, Java, Javascript, Julia, Kotlin, LuaJIT, Scala
+	- Interpreted: Lua, PHP, Raku, Ruby
+
 ## Manifest
 
 - `README.md` this document
