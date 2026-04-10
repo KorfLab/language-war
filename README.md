@@ -10,9 +10,9 @@ Write the following in each language:
 - FASTA iterator in a shared library
 - dust filter: reads FASTA, outputs masked sequence
 - kmer counter: reads FASTA, reports kmer frequencies
-- genotype by sequencing simulator: reports probabilities of patterns
-- sqlite interaction to produce mRNAs from a FASTA/GFF3 database
-- JSON interaction to read a parameter file
+- genotyping simulator: reports heterozygous probability column counts
+- get exon sequences from a FASTA/GFF3 sqlite database
+- read a parameter file in JSON
 
 For inspiration, see the `00python3-start-here` solution.
 
@@ -21,17 +21,27 @@ For inspiration, see the `00python3-start-here` solution.
 - `README.md` this document
 - `data` files used for testing
 	- `ce1pct.fa.gz` 1% of the C. elegans genome in FASTA
-	- `ce1pct.gff3.gz` 1% of the C. elegans genome in GFF3 (genes, RNA-seq)
+	- `ce1pct.gff3.gz` 1% of the C. elegans genome in GFF3 (for ref, not used)
 	- `ce.db` a sqlite database of the files above
-	- `hmm.json` a mock HMM parameter file
+	- `hmm.json` a simple HMM parameter file
 - `src` each directory is named with a language and other tags
 	- `00python-start-here` pure python
-	- `perl-oldschool` for historical reaons
-	- `c-klib-amal-jsmn` a C solution based on klib
+	- `perl-oldschool` for historical perspective
+	- `c-klib` a C solution based partly on klib
 
 ## 00python3-start-here
 
-To be filled in by Ian
+Other project should look sort of similar to this. There is no need to describe
+them in great detail since they are supposed to look like the python version.
+
+- `run.sh` use this to run all programs (then `rm *.out`)
+- `mylib.py` the shared library for FASTA files
+- `dust.py` nucleotide complexity filter
+- `kmers.py` kmer frequencies
+- `genotype.py` heterozygous probabilities
+- `exons.py` exon sequences
+- `params.py` hmm parameters
+
 
 ## c-klib
 
@@ -40,6 +50,8 @@ To be filled in by Ian
 The C implementation uses Klib at its core, which is a great library for
 C-based bioinformatics work. It is used in htslib, minimap2, etc. The SQLITE
 interaction uses the sqlite amalgamation header. The JSON parser is JSMN.
+
+The programs all have their own directory with a `Makefile` and a `main.c`.
 
 ```
 Makefile
@@ -55,15 +67,10 @@ programs/
 	dust/
 		Makefile
 		main.c
-	kmer/
-		Makefile
-		main.c
-	genotype/
-		Makefile
-		main.c
-	sql/
-		Makefile
-		main.c
+	kmers/
+	genotypes/
+	exons/
+	params/
 ```
 
 ## perl-oldschool
