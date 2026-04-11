@@ -14,7 +14,7 @@ usage: dust [OPTIONS] <fasta>\n\
 options:\n\
   -s, --size <int>       window size [20]\n\
   -e, --entropy <float>  entropy threhold [1.4]\n\
-  -w, --wrap <int>       line wrap length [80]\n\
+  -w, --wrap <int>       line wrap length [60]\n\
   -l, --lower            soft mask\n\
   -h, --help             show this message and exit\n\
 ";
@@ -31,7 +31,7 @@ program_t proc_cli(int argc, char **argv) {
 	program_t p = malloc(sizeof(ProgramParameters));
 	p->size = 20;
 	p->entropy = 1.4;
-	p->wrap = 80;
+	p->wrap = 60;
 	p->lower = 0;
 	p->fasta = NULL;
 	int opt;
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 		}
 		
 		// output
-		printf(">%s\n", rec->name.s);
+		printf(">%s %s\n", rec->name.s, rec->comment.s);
 		int len = strlen(mask);
 		for (int i = 0; i < len; i += p->wrap)
 			printf("%.*s\n", p->wrap, mask + i);
