@@ -18,10 +18,12 @@ For inspiration, see the `00python3-start-here` solution.
 
 Which languages?
 
-- Modern high performance: D, Go, Rust, Zig
-- Less common but maybe interested: Crystal, Mojo, Nim, V
+- Classic systems-level: C
+- Modern sytems-level: Go, Rust, Zig
+- Less common but maybe interested: Crystal, D, Mojo, Nim, V
 - Probably not interested
-	- JIT-based: C#, Java, Javascript, Julia, LuaJIT
+	- Compiled: C++, Free Pascal
+	- JIT-based: C#, F#, Java, Javascript, Julia, LuaJIT, Scala
 	- Interpreted: Lua, PHP, Raku, Ruby
 
 ## Manifest
@@ -37,10 +39,12 @@ Which languages?
 
 ## 00python3-start-here
 
+Status: complete
+
 Other languages should have programs with similar names and produce identical
 output. There should be a `run.sh` that builds and runs the programs.
 
-- `run.sh` use this to run all programs (then `rm *.out`)
+- `run.sh` use this to run all programs (then `rm *.out` later)
 - `mylib.py` contains the FASTA iterator
 - `dust.py` masks low complexity sequence
 - `kmers.py` counts kmers
@@ -51,32 +55,32 @@ output. There should be a `run.sh` that builds and runs the programs.
 
 ## c-klib
 
-To be filled in by Ian
+Status: working on it
 
 The C implementation uses Klib at its core, which is a great library for
-C-based bioinformatics work. It is used in htslib, minimap2, etc. The SQLITE
-interaction uses the sqlite amalgamation header. The JSON parser is JSMN.
+C-based bioinformatics work. It is used in htslib, minimap2, etc. The sqlite
+interaction uses the sqlite amalgamation. The JSON parser is JSMN.
 
 The programs all have their own directory with a `Makefile` and a `main.c`.
 
 ```
 Makefile
-README.md
 lib/
 	include/
 		jsmn.h
-		khash.h
-		krng.h
-		kseq.h
+		khash.h krng.h kseq.h kvec.h
+		mylib.h
 		sqlite3.h
-programs/
-	dust/
-		Makefile
-		main.c
-	kmers/
-	genotypes/
-	exons/
-	params/
+	src/
+		mylib.c
+		sqlite3.c
+dust/
+	Makefile
+	main.c
+kmers/
+genotypes/
+exons/
+params/
 ```
 
 ## next languages...
