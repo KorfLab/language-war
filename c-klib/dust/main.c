@@ -1,51 +1,137 @@
 #include <getopt.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <zlib.h>
 
 #include "kseq.h"
 #include "mylib.h"
+
+KSEQ_INIT(gzFile, gzread)
 
 static char *usage = "\
 usage: dust [OPTIONS] <fasta>\n\
 options:\n\
   -s, --size <int>       window size [20]\n\
   -e, --entropy <float>  entropy threhold [1.4]\n\
+  -w, --wrap <int>       line wrap length [80]\n\
   -l, --lower            soft mask\n\
   -h, --help             show this message and exit\n\
 ";
 
+typedef struct ProgramParameters {
+	int size;
+	double entropy;
+	int wrap;
+	int lower;
+	char *fasta;
+} ProgramParameters, *program_t;
 
-int main(int argc, char **argv) {
-	int size = 20;
-	double entropy = 1.4;
-	int lower = 0;
+program_t proc_cli(int argc, char **argv) {
+	program_t p = malloc(sizeof(ProgramParameters));
+	p->size = 20;
+	p->entropy = 1.4;
+	p->wrap = 80;
+	p->lower = 0;
+	p->fasta = NULL;
 	int opt;
 	
-	static struct option long_options [] = {
-		{"size",    optional_argument, 0, 's'},
-		{"entropy", optional_argument, 0, 'e'},
-		{"lower",   no_argument,       0, 'l'},
-		{"help",    no_argument,       0, 'h'},
-		{0, 0, 0, 0}
-	};
-	
-    while ((opt = getopt_long(argc, argv, "vdf:h", long_options, NULL)) != -1) {
+    while ((opt = getopt(argc, argv, "s:e:w:lh")) != -1) {
 		switch (opt) {
-			case 's': size = atoi(optarg); break;
-			case 'e': entropy = atof(optarg); break;
-			case 'l': lower = 1; break;
-			case 'h': printf("%s", usage); return 0;
-			default: printf("%s", usage); return 1;
+			case 's': p->size = atoi(optarg); break;
+			case 'e': p->entropy = atof(optarg); break;
+			case 'w': p->wrap = atoi(optarg); break;
+			case 'l': p->lower = 1; break;
+			case 'h': printf("%s", usage); exit(0);
+			default: printf("%s", usage); exit(1);
 		}
 	}
-
-	if (optind >= argc) {
+	
+	if (optind < argc) {
+		p->fasta = argv[optind];
+	} else {
 		fprintf(stderr, "Error: Missing <command>\n %s", usage);
-		return 1;
+		exit(1);
 	}
+	
+	return p;
+}
 
-	char *fasta = argv[optind];
-	fprintf(stderr, "processing %s\n", fasta);
+static double entropy(int a, int c, int g, int t) {
+	double h = 0;
+	int total = a + c + g + t;
+	double pa = (double)a / (double)total;
+	double pc = (double)c / (double)total;
+	double pg = (double)g / (double)total;
+	double pt = (double)t / (double)total;
+	if (a != 0) h -= pa * log(pa);
+	if (c != 0) h -= pc * log(pc);
+	if (g != 0) h -= pg * log(pg);
+	if (t != 0) h -= pt * log(pt);
+	return h / log(2);
+}
+
+static void mask_seq(char *seq, int offset, program_t p) {
+	if (p->lower) {
+		for (int i = offset; i < offset + p->size; i++)
+			if (seq[i] < 'Z') seq[i] += 32;
+	} else {
+		for (int i = offset; i < offset + p->size; i++) seq[i] = 'N';
+	}
+}
+
+int main(int argc, char **argv) {
+	program_t p = proc_cli(argc, argv);
+	gzFile   fp = gzopen(p->fasta, "r");
+	kseq_t *rec = kseq_init(fp);
+	int n;
+	
+	while ((n = kseq_read(rec)) >= 0) {
+		char *mask = strdup(rec->seq.s);
+		int a = 0, c = 0, g = 0, t = 0;
+		
+		// first window
+		for (int i = 0; i < p->size; i++) {
+			switch (rec->seq.s[i]) {
+				case 'A': a++; break;
+				case 'C': c++; break;
+				case 'G': g++; break;
+				case 'T': t++; break;
+			}
+		}
+		if (entropy(a, c, g, t) < p->entropy) mask_seq(mask, 0, p);
+		
+		// subsequent windows
+		for (int i = 1; i < (int)rec->seq.l - p->size + 1; i++) {
+			char off = rec->seq.s[i-1];
+			char on  = rec->seq.s[i + p->size -1];
+			switch (off) {
+				case 'A': a--; break;
+				case 'C': c--; break;
+				case 'G': g--; break;
+				case 'T': t--; break;
+			}
+			switch (on) {
+				case 'A': a++; break;
+				case 'C': c++; break;
+				case 'G': g++; break;
+				case 'T': t++; break;
+			}
+			if (entropy(a, c, g, t) < p->entropy) mask_seq(mask, i, p);
+		}
+		
+		// output
+		printf(">%s\n", rec->name.s);
+		int len = strlen(mask);
+		for (int i = 0; i < len; i += p->wrap)
+			printf("%.*s\n", p->wrap, mask + i);
+		
+		// cleanup
+		free(mask);
+	}
+	
+	kseq_destroy(rec);
+	gzclose(fp);
 
 	return 0;
 }
