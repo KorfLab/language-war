@@ -1,0 +1,119 @@
+[
+  {
+    "file": "src/mylib.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-O3",
+      "-Iinclude",
+      "-c",
+      "src/mylib.c",
+      "-o",
+      "obj/mylib.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/lib",
+    "output": "obj/mylib.o"
+  },
+  {
+    "file": "src/sqlite3.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-O3",
+      "-Iinclude",
+      "-c",
+      "src/sqlite3.c",
+      "-o",
+      "obj/sqlite3.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/lib",
+    "output": "obj/sqlite3.o"
+  },
+  {
+    "file": "main.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-D_POSIX_C_SOURCE=200809L",
+      "-I../lib/include",
+      "-c",
+      "main.c",
+      "-o",
+      "main.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/dust",
+    "output": "main.o"
+  },
+  {
+    "file": "main.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-I../lib/include",
+      "-c",
+      "main.c",
+      "-o",
+      "main.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/kmers",
+    "output": "main.o"
+  },
+  {
+    "file": "main.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-I../lib/include",
+      "-c",
+      "main.c",
+      "-o",
+      "main.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/genotype",
+    "output": "main.o"
+  },
+  {
+    "file": "main.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-I../lib/include",
+      "-c",
+      "main.c",
+      "-o",
+      "main.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/exons",
+    "output": "main.o"
+  },
+  {
+    "file": "main.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-I../lib/include",
+      "-c",
+      "main.c",
+      "-o",
+      "main.o"
+    ],
+    "directory": "/home/shanoaice/projects/language-war/c-klib/params",
+    "output": "main.o"
+  }
+]
