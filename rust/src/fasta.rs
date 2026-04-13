@@ -6,6 +6,10 @@ use flate2::bufread::GzDecoder;
 
 use thiserror::Error;
 
+type FileLines = Lines<BufReader<std::fs::File>>;
+type GzFileLines = Lines<BufReader<GzDecoder<BufReader<std::fs::File>>>>;
+type StringLines = Lines<BufReader<std::io::Cursor<String>>>;
+
 pub struct FastaRecord {
     pub description: String,
     pub sequence: String,
@@ -28,40 +32,42 @@ fn sanitize_sequence(seq: &str) -> String {
         .collect::<String>()
 }
 
-impl FastaIter<Lines<BufReader<std::fs::File>>, std::io::Error> {
-    pub fn from_file(path: &str) -> std::io::Result<Self> {
-        let file = std::fs::File::open(path)?;
-        let reader = BufReader::new(file);
-        Ok(Self {
-            lines: reader.lines(),
+impl<I, E> FastaIter<I, E>
+where
+    I: Iterator<Item = Result<String, E>>,
+    E: Error,
+{
+    fn new(lines: I) -> Self {
+        Self {
+            lines,
             pending_header: None,
             finished: false,
-        })
+        }
     }
 }
 
-impl FastaIter<Lines<BufReader<GzDecoder<BufReader<std::fs::File>>>>, std::io::Error> {
+impl FastaIter<FileLines, std::io::Error> {
+    pub fn from_file(path: &str) -> std::io::Result<Self> {
+        let file = std::fs::File::open(path)?;
+        let reader = BufReader::new(file);
+        Ok(Self::new(reader.lines()))
+    }
+}
+
+impl FastaIter<GzFileLines, std::io::Error> {
     pub fn from_gz_file(path: &str) -> std::io::Result<Self> {
         let file = std::fs::File::open(path)?;
         let buf_file = BufReader::new(file);
         let gz_decoder = GzDecoder::new(buf_file);
         let buf_gz_decoder = BufReader::new(gz_decoder);
-        Ok(Self {
-            lines: buf_gz_decoder.lines(),
-            pending_header: None,
-            finished: false,
-        })
+        Ok(Self::new(buf_gz_decoder.lines()))
     }
 }
 
 impl FastaIter<Lines<std::io::StdinLock<'_>>, std::io::Error> {
     pub fn from_stdin() -> Self {
         let stdin = std::io::stdin();
-        Self {
-            lines: stdin.lines(),
-            pending_header: None,
-            finished: false,
-        }
+        Self::new(stdin.lines())
     }
 }
 
@@ -70,22 +76,14 @@ impl FastaIter<Lines<BufReader<GzDecoder<std::io::StdinLock<'_>>>>, std::io::Err
         let stdin = std::io::stdin();
         let gz_decoder = GzDecoder::new(stdin.lock());
         let buf_gz_decoder = BufReader::new(gz_decoder);
-        Self {
-            lines: buf_gz_decoder.lines(),
-            pending_header: None,
-            finished: false,
-        }
+        Self::new(buf_gz_decoder.lines())
     }
 }
 
-impl FastaIter<Lines<BufReader<std::io::Cursor<String>>>, std::io::Error> {
+impl FastaIter<StringLines, std::io::Error> {
     pub fn from_string(data: String) -> Self {
         let cursor = std::io::Cursor::new(data);
-        Self {
-            lines: BufReader::new(cursor).lines(),
-            pending_header: None,
-            finished: false,
-        }
+        Self::new(BufReader::new(cursor).lines())
     }
 }
 
