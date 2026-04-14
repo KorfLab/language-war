@@ -82,4 +82,31 @@ exons/
 params/
 ```
 
+## rust
+
+Status: `fasta` iterator complete
+
+The Rust implementation ties together several crates, as Rust ecosystem does
+not seem to have bioinformatic libraries just yet. The SQLite interaction uses
+the awesome `rusqlite` crate. The JSON parser is `rkyv`.
+
+The library resides under the root of `src/` directory. In the `bin/`
+subdirectory, each file gets compiled into a separate binary (in a separate
+crate). Cargo is the official way to build Rust programs and manage deps.
+
+```
+rust/
+  Cargo.lock
+  Cargo.toml
+  src/
+    bin/
+      dust.rs
+      kmers.rs
+      genotypes.rs
+      exons.rs
+      params.rs
+    fasta.rs
+    lib.rs
+```
+
 ## next languages...
