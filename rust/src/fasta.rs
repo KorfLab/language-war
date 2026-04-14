@@ -1,14 +1,8 @@
-use std::{
-    error::Error,
-    io::{BufReader, Lines, prelude::*},
-};
 use flate2::bufread::GzDecoder;
-
+use std::{
+    io::{BufReader, prelude::*},
+};
 use thiserror::Error;
-
-type FileLines = Lines<BufReader<std::fs::File>>;
-type GzFileLines = Lines<BufReader<GzDecoder<BufReader<std::fs::File>>>>;
-type StringLines = Lines<BufReader<std::io::Cursor<String>>>;
 
 pub struct FastaRecord {
     pub description: String,
@@ -41,100 +35,92 @@ impl FastaRecord {
     }
 }
 
-pub struct FastaIter<I: Iterator<Item = Result<String, E>>, E: Error> {
-    lines: I,
+pub struct FastaIter {
+    buf_read: Box<dyn BufRead>,
+    line_buffer: String,
     pending_header: Option<String>,
     finished: bool,
 }
 
-#[derive(Debug, Error)]
-pub enum FastaIterError<E: Error> {
-    LineIterError(E),
+#[derive(Error, Debug)]
+pub enum FastaIterError {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
 
-fn sanitize_sequence(seq: &str) -> String {
-    seq.chars()
-        .filter(|c| c.is_ascii_alphabetic())
-        .collect::<String>()
+fn append_sanitized_sequence(dest: &mut String, src: &str) {
+    dest.extend(src.chars().filter(|c| c.is_ascii_alphabetic()))
 }
 
-impl<I, E> FastaIter<I, E>
-where
-    I: Iterator<Item = Result<String, E>>,
-    E: Error,
-{
-    fn new(lines: I) -> Self {
+impl FastaIter {
+    fn new(buf_read: Box<dyn BufRead>) -> Self {
         Self {
-            lines,
+            buf_read,
+            // lines in FASTA file typically is 60-80 chars long
+            line_buffer: String::with_capacity(96),
             pending_header: None,
             finished: false,
         }
     }
 }
 
-impl FastaIter<FileLines, std::io::Error> {
+impl FastaIter {
     pub fn from_file(path: &str) -> std::io::Result<Self> {
         let file = std::fs::File::open(path)?;
         let reader = BufReader::new(file);
-        Ok(Self::new(reader.lines()))
+        Ok(Self::new(Box::new(reader)))
     }
-}
 
-impl FastaIter<GzFileLines, std::io::Error> {
     pub fn from_gz_file(path: &str) -> std::io::Result<Self> {
         let file = std::fs::File::open(path)?;
         let buf_file = BufReader::new(file);
         let gz_decoder = GzDecoder::new(buf_file);
         let buf_gz_decoder = BufReader::new(gz_decoder);
-        Ok(Self::new(buf_gz_decoder.lines()))
+        Ok(Self::new(Box::new(buf_gz_decoder)))
     }
-}
-
-impl FastaIter<Lines<std::io::StdinLock<'_>>, std::io::Error> {
+    
     pub fn from_stdin() -> Self {
         let stdin = std::io::stdin();
-        Self::new(stdin.lines())
+        Self::new(Box::new(BufReader::new(stdin)))
     }
-}
-
-impl FastaIter<Lines<BufReader<GzDecoder<std::io::StdinLock<'_>>>>, std::io::Error> {
+    
     pub fn from_gz_stdin() -> Self {
         let stdin = std::io::stdin();
-        let gz_decoder = GzDecoder::new(stdin.lock());
+        let gz_decoder = GzDecoder::new(BufReader::new(stdin));
         let buf_gz_decoder = BufReader::new(gz_decoder);
-        Self::new(buf_gz_decoder.lines())
+        Self::new(Box::new(buf_gz_decoder))
     }
-}
-
-impl FastaIter<StringLines, std::io::Error> {
+    
     pub fn from_string(data: String) -> Self {
         let cursor = std::io::Cursor::new(data);
-        Self::new(BufReader::new(cursor).lines())
+        Self::new(Box::new(cursor))
     }
 }
 
-impl<I, E> Iterator for FastaIter<I, E>
-where
-    I: Iterator<Item = Result<String, E>>,
-    E: Error,
-{
-    type Item = Result<FastaRecord, FastaIterError<E>>;
-
+impl Iterator for FastaIter {
+    type Item = Result<FastaRecord, FastaIterError>;
+    
     fn next(&mut self) -> Option<Self::Item> {
         if self.finished {
             return None;
         }
 
         let mut seq_desc: Option<String> = None;
-        let mut sequence = String::new();
+        let mut sequence = String::with_capacity(1024);
 
         if let Some(header) = self.pending_header.take() {
             seq_desc = Some(header);
         }
 
-        for line_result in &mut self.lines {
-            match line_result {
-                Ok(line) => {
+        loop {
+            self.line_buffer.clear();
+            match self.buf_read.read_line(&mut self.line_buffer) {
+                Ok(0) => {
+                    self.finished = true;
+                    break;
+                }
+                Ok(_) => {
+                    let line = self.line_buffer.trim_end();
                     if let Some(description) = line.strip_prefix('>') {
                         if seq_desc.is_none() {
                             seq_desc = Some(description.to_string());
@@ -145,16 +131,22 @@ where
                     } else if line.starts_with(';') {
                         continue; // Skip comment lines
                     } else {
-                        sequence.push_str(&sanitize_sequence(&line));
+                        append_sanitized_sequence(&mut sequence, line);
                     }
                 }
-                Err(e) => return Some(Err(FastaIterError::LineIterError(e))),
+                Err(e) => {
+                    self.finished = true;
+                    return Some(Err(FastaIterError::Io(e)));
+                }
             }
         }
 
         if seq_desc.is_none() && sequence.is_empty() {
-            self.finished = true;
             return None;
+        }
+        
+        if self.line_buffer.capacity() > 1024 {
+            self.line_buffer.shrink_to(96);
         }
 
         Some(Ok(FastaRecord {
