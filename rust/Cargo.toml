@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.6.0", features = ["derive"] }
 flate2 = "1.1.9"
+rusqlite = { version = "0.39.0", features = ["bundled"] }
 thiserror = "2.0.18"
