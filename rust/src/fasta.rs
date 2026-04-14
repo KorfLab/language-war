@@ -81,12 +81,12 @@ impl FastaIter {
     
     pub fn from_stdin() -> Self {
         let stdin = std::io::stdin();
-        Self::new(Box::new(BufReader::new(stdin)))
+        Self::new(Box::new(stdin.lock()))
     }
     
     pub fn from_gz_stdin() -> Self {
         let stdin = std::io::stdin();
-        let gz_decoder = GzDecoder::new(BufReader::new(stdin));
+        let gz_decoder = GzDecoder::new(stdin.lock());
         let buf_gz_decoder = BufReader::new(gz_decoder);
         Self::new(Box::new(buf_gz_decoder))
     }
