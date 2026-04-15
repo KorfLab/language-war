@@ -81,9 +81,22 @@ exons/
 params/
 ```
 
-## rust
+## Rust
 
-Status: `fasta` iterator, `exons` complete
+Status:
+
+- [x] `fasta` iterator
+- [x] `exons` extraction from SQLite 3
+- [x] `params` de/serialize (with pretty printing)
+  - **Remarks:** as a strongly-typed language, Rust inherently have a different
+    model to do data de/serialization. It is possible to not use a schema and
+    instead work with raw values, but it is extremely-error prone. This should
+    have been implemented in the library. However, I did not have a well-defined
+    schema for HMM params yet, so the current implementation is in the binary
+    with a best-effort guessed schema from test data.
+- [ ] kmer counter
+- [ ] genotyping simulator
+- [ ] dust filter
 
 The Rust implementation ties together several crates, as Rust ecosystem does
 not seem to have bioinformatic libraries just yet. The SQLite interaction uses
