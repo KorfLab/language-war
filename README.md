@@ -1,5 +1,4 @@
-language-war
-============
+# language-war
 
 Comparing various languages for building bioinformatics applications
 
@@ -84,7 +83,7 @@ params/
 
 ## rust
 
-Status: `fasta` iterator complete
+Status: `fasta` iterator, `exons` complete
 
 The Rust implementation ties together several crates, as Rust ecosystem does
 not seem to have bioinformatic libraries just yet. The SQLite interaction uses
@@ -98,6 +97,7 @@ crate). Cargo is the official way to build Rust programs and manage deps.
 rust/
   Cargo.lock
   Cargo.toml
+  run.sh
   src/
     bin/
       dust.rs
