@@ -1,7 +1,7 @@
 use crate::sequence::reverse_complement;
 use flate2::bufread::GzDecoder;
 use std::{
-    io::{BufReader, prelude::*}, iter::FusedIterator
+    io::{BufReader, prelude::*}, iter::FusedIterator, path::Path
 };
 use thiserror::Error;
 
@@ -46,32 +46,32 @@ impl FastaIter {
 }
 
 impl FastaIter {
-    pub fn from_file(path: &str) -> std::io::Result<Self> {
+    pub fn from_file(path: &Path) -> std::io::Result<Self> {
         let file = std::fs::File::open(path)?;
         let reader = BufReader::new(file);
         Ok(Self::new(Box::new(reader)))
     }
 
-    pub fn from_gz_file(path: &str) -> std::io::Result<Self> {
+    pub fn from_gz_file(path: &Path) -> std::io::Result<Self> {
         let file = std::fs::File::open(path)?;
         let buf_file = BufReader::new(file);
         let gz_decoder = GzDecoder::new(buf_file);
         let buf_gz_decoder = BufReader::new(gz_decoder);
         Ok(Self::new(Box::new(buf_gz_decoder)))
     }
-    
+
     pub fn from_stdin() -> Self {
         let stdin = std::io::stdin();
         Self::new(Box::new(stdin.lock()))
     }
-    
+
     pub fn from_gz_stdin() -> Self {
         let stdin = std::io::stdin();
         let gz_decoder = GzDecoder::new(stdin.lock());
         let buf_gz_decoder = BufReader::new(gz_decoder);
         Self::new(Box::new(buf_gz_decoder))
     }
-    
+
     pub fn from_string(data: String) -> Self {
         let cursor = std::io::Cursor::new(data);
         Self::new(Box::new(cursor))
@@ -80,7 +80,7 @@ impl FastaIter {
 
 impl Iterator for FastaIter {
     type Item = Result<FastaRecord, FastaIterError>;
-    
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.finished {
             return None;
@@ -125,7 +125,7 @@ impl Iterator for FastaIter {
         if seq_desc.is_none() && sequence.is_empty() {
             return None;
         }
-        
+
         if self.line_buffer.capacity() > 1024 {
             self.line_buffer.shrink_to(96);
         }
