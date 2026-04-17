@@ -1,7 +1,7 @@
 use crate::sequence::reverse_complement;
 use flate2::bufread::GzDecoder;
 use std::{
-    io::{BufReader, prelude::*},
+    io::{BufReader, prelude::*}, iter::FusedIterator
 };
 use thiserror::Error;
 
@@ -136,3 +136,5 @@ impl Iterator for FastaIter {
         }))
     }
 }
+
+impl FusedIterator for FastaIter {}
