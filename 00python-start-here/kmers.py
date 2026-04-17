@@ -19,6 +19,6 @@ for defline, seq in mylib.readfasta(arg.fasta):
 			counts[kmer] += 1
 
 total = sum(counts.values())
-if arg.anti: total *= 2
+#if arg.anti: total *= 2
 for kmer, n in sorted(counts.items()):
 	print(kmer, n, n/total, sep='\t')
