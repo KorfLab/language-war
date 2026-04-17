@@ -1,3 +1,4 @@
+use crate::sequence::reverse_complement;
 use flate2::bufread::GzDecoder;
 use std::{
     io::{BufReader, prelude::*},
@@ -9,29 +10,9 @@ pub struct FastaRecord {
     pub sequence: String,
 }
 
-fn complement_base(base: char) -> char {
-    match base {
-        'A' => 'T',
-        'C' => 'G',
-        'G' => 'C',
-        'T' => 'A',
-        'R' => 'Y',
-        'Y' => 'R',
-        'M' => 'K',
-        'K' => 'M',
-        'W' => 'W',
-        'S' => 'S',
-        'B' => 'V',
-        'D' => 'H',
-        'H' => 'D',
-        'V' => 'B',
-        _ => base,
-    }
-}
-
 impl FastaRecord {
     pub fn reverse_complement(&self) -> String {
-        self.sequence.chars().rev().map(complement_base).collect()
+        reverse_complement(&self.sequence)
     }
 }
 
