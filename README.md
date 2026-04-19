@@ -94,19 +94,19 @@ Status:
     have been implemented in the library. However, I did not have a well-defined
     schema for HMM params yet, so the current implementation is in the binary
     with a best-effort guessed schema from test data.
-- [ ] kmer counter
+- [x] kmer counter
 - [ ] genotyping simulator
 - [ ] dust filter
 
 The Rust implementation ties together several crates, as Rust ecosystem does
 not seem to have bioinformatic libraries just yet. The SQLite interaction uses
-the awesome `rusqlite` crate. The JSON parser is `rkyv`.
+the awesome `rusqlite` crate. The JSON parser is `serde` and `serde-json`.
 
 The library resides under the root of `src/` directory. In the `bin/`
 subdirectory, each file gets compiled into a separate binary (in a separate
 crate). Cargo is the official way to build Rust programs and manage deps.
 
-```
+```tree
 rust/
   Cargo.lock
   Cargo.toml
@@ -119,6 +119,8 @@ rust/
       exons.rs
       params.rs
     fasta.rs
+    kmer.rs
+    sequence.rs
     lib.rs
 ```
 
