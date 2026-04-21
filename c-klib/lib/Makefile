@@ -2,7 +2,7 @@
 
 CC      := gcc
 CFLAGS  := -std=c11 -Wall -Wextra -Wpedantic -O3 -Iinclude
-LDFLAGS := -lsqlite3 -lptread -ldl
+LDFLAGS := -lptread -ldl
 
 LIB_NAME := libmylib.a
 SRC_DIR  := src

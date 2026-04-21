@@ -12,11 +12,11 @@ KSEQ_INIT(gzFile, gzread)
 static char *usage = "\
 usage: dust [OPTIONS] <fasta>\n\
 options:\n\
-  -s, --size <int>       window size [20]\n\
-  -e, --entropy <float>  entropy threhold [1.4]\n\
-  -w, --wrap <int>       line wrap length [60]\n\
-  -l, --lower            soft mask\n\
-  -h, --help             show this message and exit\n\
+  -s  <int>    window size [20]\n\
+  -e  <float>  entropy threhold [1.4]\n\
+  -w  <int>    line wrap length [60]\n\
+  -l           soft mask\n\
+  -h           show this message and exit\n\
 ";
 
 typedef struct ProgramParameters {
@@ -35,7 +35,7 @@ program_t proc_cli(int argc, char **argv) {
 	p->lower = 0;
 	p->fasta = NULL;
 	int opt;
-	
+
     while ((opt = getopt(argc, argv, "s:e:w:lh")) != -1) {
 		switch (opt) {
 			case 's': p->size = atoi(optarg); break;
@@ -46,14 +46,14 @@ program_t proc_cli(int argc, char **argv) {
 			default: printf("%s", usage); exit(1);
 		}
 	}
-	
+
 	if (optind < argc) {
 		p->fasta = argv[optind];
 	} else {
 		fprintf(stderr, "Error: Missing <command>\n %s", usage);
 		exit(1);
 	}
-	
+
 	return p;
 }
 
@@ -85,11 +85,11 @@ int main(int argc, char **argv) {
 	gzFile   fp = gzopen(p->fasta, "r");
 	kseq_t *rec = kseq_init(fp);
 	int n;
-	
+
 	while ((n = kseq_read(rec)) >= 0) {
 		char *mask = strdup(rec->seq.s);
 		int a = 0, c = 0, g = 0, t = 0;
-		
+
 		// first window
 		for (int i = 0; i < p->size; i++) {
 			switch (rec->seq.s[i]) {
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		if (entropy(a, c, g, t) < p->entropy) mask_seq(mask, 0, p);
-		
+
 		// subsequent windows
 		for (int i = 1; i < (int)rec->seq.l - p->size + 1; i++) {
 			char off = rec->seq.s[i-1];
@@ -119,17 +119,17 @@ int main(int argc, char **argv) {
 			}
 			if (entropy(a, c, g, t) < p->entropy) mask_seq(mask, i, p);
 		}
-		
+
 		// output
 		printf(">%s %s\n", rec->name.s, rec->comment.s);
 		int len = strlen(mask);
 		for (int i = 0; i < len; i += p->wrap)
 			printf("%.*s\n", p->wrap, mask + i);
-		
+
 		// cleanup
 		free(mask);
 	}
-	
+
 	kseq_destroy(rec);
 	gzclose(fp);
 

@@ -2,7 +2,7 @@
 
 CC      := gcc
 CFLAGS  := -std=c11 -Wall -Wextra -D_POSIX_C_SOURCE=200809L -I../lib/include
-LDFLAGS := -L../lib -lmylib -lsqlite3 -lm -lz
+LDFLAGS := -L../lib -lmylib -lm -lz
 
 TARGET  := dust
 SRCS    := main.c
