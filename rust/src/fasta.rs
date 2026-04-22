@@ -1,16 +1,39 @@
 use crate::sequence::reverse_complement;
 use flate2::bufread::GzDecoder;
 use std::{
-    io::{BufReader, prelude::*}, iter::FusedIterator, path::Path
+    fmt::Display,
+    io::{BufReader, prelude::*},
+    iter::FusedIterator,
+    path::Path,
 };
 use thiserror::Error;
 
 pub struct FastaRecord {
-    pub description: String,
-    pub sequence: String,
+    description: String,
+    sequence: String,
 }
 
 impl FastaRecord {
+    /// Creates a new FastaRecord, sanitizing the sequence to only include ASCII alphabetic characters.
+    pub fn new(description: String, sequence: String) -> Self {
+        let sequence = sequence
+            .chars()
+            .filter(|c| c.is_ascii_alphabetic())
+            .collect();
+        Self {
+            description,
+            sequence,
+        }
+    }
+
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    pub fn sequence(&self) -> &str {
+        &self.sequence
+    }
+
     pub fn reverse_complement(&self) -> String {
         reverse_complement(&self.sequence)
     }
@@ -130,6 +153,8 @@ impl Iterator for FastaIter {
             self.line_buffer.shrink_to(96);
         }
 
+        // We don't invoke the constructor to avoid double filtering of the
+        // sequence.
         Some(Ok(FastaRecord {
             description: seq_desc.unwrap_or_default(),
             sequence,

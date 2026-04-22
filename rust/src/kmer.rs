@@ -13,10 +13,10 @@ pub fn count_kmers(
     let mut counts = HashMap::with_capacity_and_hasher(estimated_unique_kmers, FxBuildHasher);
 
     for seq in seqs {
-        let seq_len = seq.sequence.len();
+        let seq_len = seq.sequence().len();
 
         for i in 0..=seq_len - k {
-            let kmer = &seq.sequence[i..i + k];
+            let kmer = &seq.sequence()[i..i + k];
             *counts.entry(kmer.to_string()).or_insert(0) += 1;
 
             if anti {
