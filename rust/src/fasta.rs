@@ -39,6 +39,21 @@ impl FastaRecord {
     }
 }
 
+impl Display for FastaRecord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, ">{}", self.description())?;
+        for chunk in self.sequence().as_bytes().chunks(60) {
+            // this is safe because a FastaRecord is guaranteed to only contain ASCII
+            // alphabetic characters, which are all valid UTF-8 and can be safely split by
+            // bytes.
+            unsafe {
+                writeln!(f, "{}", std::str::from_utf8_unchecked(chunk))?;
+            }
+        }
+        Ok(())
+    }
+}
+
 pub struct FastaIter {
     buf_read: Box<dyn BufRead>,
     line_buffer: String,
