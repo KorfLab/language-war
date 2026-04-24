@@ -95,8 +95,8 @@ Status:
     schema for HMM params yet, so the current implementation is in the binary
     with a best-effort guessed schema from test data.
 - [x] kmer counter
-- [ ] genotyping simulator
-- [ ] dust filter
+- [x] genotyping simulator
+- [x] dust filter
 
 The Rust implementation ties together several crates, as Rust ecosystem does
 not seem to have bioinformatic libraries just yet. The SQLite interaction uses
