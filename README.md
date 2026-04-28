@@ -1,5 +1,4 @@
-language-war
-============
+# language-war
 
 Comparing various languages for building bioinformatics applications
 
@@ -80,6 +79,49 @@ kmers/
 genotypes/
 exons/
 params/
+```
+
+## Rust
+
+Status:
+
+- [x] `fasta` iterator
+- [x] `exons` extraction from SQLite 3
+- [x] `params` de/serialize (with pretty printing)
+  - **Remarks:** as a strongly-typed language, Rust inherently have a different
+    model to do data de/serialization. It is possible to not use a schema and
+    instead work with raw values, but it is extremely-error prone. This should
+    have been implemented in the library. However, I did not have a well-defined
+    schema for HMM params yet, so the current implementation is in the binary
+    with a best-effort guessed schema from test data.
+- [x] kmer counter
+- [x] genotyping simulator
+- [x] dust filter
+
+The Rust implementation ties together several crates, as Rust ecosystem does
+not seem to have bioinformatic libraries just yet. The SQLite interaction uses
+the awesome `rusqlite` crate. The JSON parser is `serde` and `serde-json`.
+
+The library resides under the root of `src/` directory. In the `bin/`
+subdirectory, each file gets compiled into a separate binary (in a separate
+crate). Cargo is the official way to build Rust programs and manage deps.
+
+```tree
+rust/
+  Cargo.lock
+  Cargo.toml
+  run.sh
+  src/
+    bin/
+      dust.rs
+      kmers.rs
+      genotypes.rs
+      exons.rs
+      params.rs
+    fasta.rs
+    kmer.rs
+    sequence.rs
+    lib.rs
 ```
 
 ## next languages...
