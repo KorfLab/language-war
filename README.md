@@ -98,6 +98,14 @@ Status:
 - [x] genotyping simulator
 - [x] dust filter
 
+Extras:
+
+- [ ] Hidden Markov Model
+  - [x] Structural Modeling
+  - [x] Viterbi Algorithm
+  - [ ] Parse Strctural JSON Parameters
+  - [ ] Parse Non-Structural JSON Parameters
+
 The Rust implementation ties together several crates, as Rust ecosystem does
 not seem to have bioinformatic libraries just yet. The SQLite interaction uses
 the awesome `rusqlite` crate. The JSON parser is `serde` and `serde-json`.
@@ -114,14 +122,21 @@ rust/
   src/
     bin/
       dust.rs
-      kmers.rs
-      genotypes.rs
       exons.rs
+      genotypes.rs
+      kmers.rs
+      occassionally_dishonest_casino.rs
       params.rs
+    collections/
+      vec2.rs
+    collections.rs
+    dust.rs
     fasta.rs
+    genotype.rs
+    hidden_markov.rs
     kmer.rs
-    sequence.rs
     lib.rs
+    sequence.rs
 ```
 
 ## next languages...
