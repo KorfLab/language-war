@@ -83,7 +83,8 @@ params/
 
 ## Rust
 
-Status:
+Status: major feature complete. FASTA iterator could use SIMD acceleration for
+parsing. Extra HMM implementation is mostly complete.
 
 - [x] `fasta` iterator
 - [x] `exons` extraction from SQLite 3
