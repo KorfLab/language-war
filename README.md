@@ -53,7 +53,14 @@ identical output. There should be a `run.sh` that builds and runs the programs.
 
 ## c-klib
 
-Status: `dust` complete
+Status:
+
+- [x] `dust`
+- [x] `kmers`
+- [ ] `genotype` working, but not threaded and output not pretty
+- [ ] `exons`
+- [ ] `params`
+
 
 The C implementation uses Klib at its core, which is a great library for
 C-based bioinformatics work. It is used in htslib, minimap2, etc. The sqlite
