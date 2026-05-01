@@ -74,7 +74,7 @@ if __name__ == '__main__':
 	if arg.output: fp = open(arg.output, 'w')
 	else:          fp = sys.stdout
 	print('Counts', 'Hom', 'Het', 'P(hom)', sep='\t', file=fp)
-	for sig in sorted(list(comb_hom or comb_het), reverse=True):
+	for sig in sorted(list(comb_hom | comb_het), reverse=True):
 		hom = comb_hom[sig] if sig in comb_hom else 0
 		het = comb_het[sig] if sig in comb_het else 0
 		print(sig, hom, het, hom / (hom+het), sep='\t', file=fp)
