@@ -35,6 +35,73 @@ Which languages?
 - `00python-start-here` pure Python to inspire other solutions
 - `c-klib` a C solution based partly on klib
 
+## Discussion
+
+### Python
+
+Pros:
+
+- It is the most popular language
+- Most students already know it
+
+Cons:
+
+- Python is slow and I want this codebase to be fast
+- This codebase isn't designed for "students", but for me
+- I don't like programming in Python
+
+### C
+
+Pros:
+
+- C is the "mother language"
+- C is very fast
+- C is old-school and I'm a curmudgeon
+- C has some good bioinformatics libraries already
+- Some of my favorite programs are written in C
+- Most of my programming heros program in C
+
+Cons:
+
+- C has memory safety issues (which aren't a big deal for this project)
+
+### Rust
+
+Pros:
+
+- It's a memory-safe systems language
+- It's replacing C
+
+Cons:
+
+- There is much to learn
+- Not much previous bioinformatics to lean on
+
+### Go
+
+Pros:
+
+- It's pretty fast
+- It's easy to develop in
+
+Cons:
+
+- It's not quite as fast as C
+- The garbage collector adds weight
+
+### Zig
+
+Pros:
+
+- Seems like "a better C"
+- There is much to learn
+
+Cons:
+
+- A little niche
+- Not much previous bioinformatics to lean on
+
+
 ## 00python3-start-here
 
 Status: acceptable, requires version >= 3.10
