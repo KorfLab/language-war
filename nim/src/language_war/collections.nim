@@ -1,5 +1,5 @@
 ## Simple 2-D matrix (`Vec2[T]`) with optional keyed access (`IndexedVec2`).
-
+import options
 import tables
 
 type
