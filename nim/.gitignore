@@ -1,3 +1,7 @@
 nimble.develop
 nimble.paths
 nimbledeps
+
+# Xmake cache
+.xmake/
+build/
