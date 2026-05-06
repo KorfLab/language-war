@@ -7,7 +7,7 @@
 ## Simulates homozygous and heterozygous genotype observations and reports
 ## signature probabilities.
 
-import parseopt, os, strutils
+import parseopt, os, strutils, options
 import language_war / genotype
 
 type
@@ -46,13 +46,13 @@ when isMainModule:
   let (homoCounts, heteroCounts) = countGenotypesParallel(
     int(args.iterations), args.depth, args.errRate, args.threads)
 
-  var out: File
+  var outputStream: File
   if args.outputPath.isSome:
-    out = open(args.outputPath.get, fmWrite)
+    outputStream = open(args.outputPath.get, fmWrite)
   else:
-    out = stdout
+    outputStream = stdout
 
-  out.writeLine("Counts\tHom\tHet\tP(hom)")
+  outputStream.writeLine("Counts\tHom\tHet\tP(hom)")
 
   var allSigs: seq[string]
   for k in homoCounts.keys: allSigs.add(k)
@@ -65,7 +65,7 @@ when isMainModule:
     let het = heteroCounts.getOrDefault(sig, 0)
     let total = hom + het
     let pHom = if total > 0: float(hom) / float(total) else: 0.0
-    out.writeLine(sig, "\t", hom, "\t", het, "\t", pHom)
+    outputStream.writeLine(sig, "\t", hom, "\t", het, "\t", pHom)
 
   if args.outputPath.isSome:
-    out.close()
+    outputStream.close()
