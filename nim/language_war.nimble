@@ -8,12 +8,14 @@ installExt = @["nim"]
 srcDir        = "src"
 bin = @[
   "dust",
-  "kmers",
-  "genotype",
-  "exons",
-  "params"
+#  "kmers",
+#  "genotype",
+#  "exons",
+#  "params"
 ]
 
 # Dependencies
 
-requires "nim >= 2.2.10"
+requires "nim >= 2.2.0"
+requires "zippy ^= 0.10.19"
+requires "nclap"

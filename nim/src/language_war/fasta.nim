@@ -1,8 +1,9 @@
 ## FASTA record and iterator.  Supports plain, gzip-compressed, and stdin
 ## input sources.
 
-import streams, gzipfiles, os
-from strutils import startsWith, strip
+import options
+from sequence import reverseComplement
+import std/[streams, ropes, strutils]
 
 type
   FastaRecord* = object
@@ -13,15 +14,6 @@ type
 
   FastaIterError* = object of CatchableError
     ## Raised when reading a FASTA file fails.
-
-  FastaIter* = ref object
-    ## Stateful iterator over FASTA records from a stream.
-    ## Use one of the ``newFastaIter*`` constructors to obtain an instance,
-    ## then iterate with ``for record in iter``.
-    stream: Stream
-    lineBuffer: string
-    pendingHeader: Option[string]
-    finished: bool
 
 # ---------------------------------------------------------------------------
 # FastaRecord
@@ -43,8 +35,7 @@ proc sequence*(rec: FastaRecord): string {.inline.} =
 
 proc reverseComplement*(rec: FastaRecord): string =
   ## Convenience: reverse complement of this record's sequence.
-  from language_war/sequence import reverseComplement
-  language_war/sequence.reverseComplement(rec.sequence)
+  sequence.reverseComplement(rec.sequence)
 
 proc `$`*(rec: FastaRecord): string =
   ## Formats the record in FASTA format (60-character wrapped lines).
@@ -57,63 +48,41 @@ proc `$`*(rec: FastaRecord): string =
     i += chunkLen
 
 # ---------------------------------------------------------------------------
-# FastaIter — constructors
-# ---------------------------------------------------------------------------
-
-proc newFastaIter*(stream: Stream): FastaIter =
-  ## Low-level constructor.  Prefer the convenience constructors below.
-  result = FastaIter(
-    stream: stream,
-    lineBuffer: newStringOfCap(96),
-    pendingHeader: none(string),
-    finished: false,
-  )
-
-proc newFastaIterFromFile*(filename: string): FastaIter =
-  ## Opens a plain FASTA file for iteration.
-  let s = newFileStream(filename, fmRead)
-  if s.isNil:
-    raise newException(FastaIterError, "cannot open FASTA file: " & filename)
-  result = newFastaIter(s)
-
-proc newFastaIterFromGzFile*(filename: string): FastaIter =
-  ## Opens a gzip-compressed FASTA file (``.gz``) for iteration.
-  let gzs = newGzFileStream(filename)
-  if gzs.isNil:
-    raise newException(FastaIterError, "cannot open gzipped FASTA file: " & filename)
-  result = newFastaIter(gzs)
-
-proc newFastaIterFromStdin*(): FastaIter =
-  ## Iterates FASTA records from stdin.
-  newFastaIter(newFileStream(stdin))
-
-proc newFastaIterFromGzStdin*(): FastaIter =
-  ## Iterates FASTA records from gzip-compressed stdin.
-  let gzs = newGzFileStream(stdin)
-  result = newFastaIter(gzs)
-
-proc newFastaIterFromString*(data: string): FastaIter =
-  ## Iterates FASTA records from an in-memory string.
-  newFastaIter(newStringStream(data))
-
-# ---------------------------------------------------------------------------
 # FastaIter — iteration
 # ---------------------------------------------------------------------------
 
-proc close*(iter: FastaIter) =
-  ## Release the underlying stream.
-  if not iter.stream.isNil:
-    iter.stream.close()
-    iter.stream = nil
-
-iterator items*(iter: FastaIter): FastaRecord =
-  ## Yields successive `FastaRecord` objects.
-  ##
-  ## Lines starting with `;` are treated as comments and skipped.
-  ## Non-alphabetic characters in sequence lines are silently stripped.
-  ##
-  ## *Note*: unlike the Rust implementation this iterator does not return
-  ## ``Result`` — I/O errors are raised as `FastaIterError` exceptions.
+## Yields successive `FastaRecord` objects.
+##
+## Lines starting with `;` are treated as comments and skipped.
+## Non-alphabetic characters in sequence lines are silently stripped.
+##
+## *Note*: unlike the Rust implementation this iterator does not return
+## ``Result`` — I/O errors are raised as `FastaIterError` exceptions.
+iterator fastaRecords*(stream: Stream): FastaRecord {.inline.} =
   template err(msg: string) = raise newException(FastaIterError, msg)
-  # -- placeholder: logic to be filled in --
-  discard
+
+  var sequence: Rope = nil
+  var pendingDesc: Option[string] = none(string)
+  var lineBuffer = newStringOfCap(96)
+
+  if not stream.atEnd:
+    # -- read a line into lineBuffer --
+    # -- if it's a header, store it in pendingDesc and continue --
+    # -- if it's a comment, skip it --
+    # -- otherwise, it's a sequence line: combine with pending header to yield a FastaRecord --
+    # -- if we reach the end of the stream, yield any pending record and finish --
+    while stream.readLine(lineBuffer):
+      if lineBuffer.startsWith('>'):
+        if pendingDesc.isSome:
+          yield newFastaRecord(pendingDesc.get(), $sequence)
+          sequence = nil
+        lineBuffer.removePrefix('>')
+        pendingDesc = some(lineBuffer.strip())
+      elif lineBuffer.startsWith(';'):
+        continue
+      else:
+        sequence.add(lineBuffer)
+    
+    # EOF: yield any pending record and finish
+    if pendingDesc.isSome or sequence.isNil:
+      yield newFastaRecord(pendingDesc.get(""), $sequence)

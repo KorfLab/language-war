@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "packages": {
+    "nim": {
+      "version": "2.2.10",
+      "vcsRevision": "9fe2137fa2f3f66cf5a44f357d461829ac9e20c4",
+      "url": "https://github.com/nim-lang/Nim.git",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "17ec440fdb89f8903db29a17898af590087d2b64"
+      }
+    },
+    "fusion": {
+      "version": "1.2",
+      "vcsRevision": "0b0a0273b8df860cd54e3fcca7bb4c617244ac77",
+      "url": "https://github.com/nim-lang/fusion",
+      "downloadMethod": "git",
+      "dependencies": [
+        "nim"
+      ],
+      "checksums": {
+        "sha1": "408bde8679bce63dfb6f424e107eb37c5eb31510"
+      }
+    },
+    "nclap": {
+      "version": "0.3.0",
+      "vcsRevision": "099573fee6ead6acf9ac8778d9d387aab8d45dc5",
+      "url": "https://github.com/AinTEAsports/nclap",
+      "downloadMethod": "git",
+      "dependencies": [
+        "nim",
+        "fusion"
+      ],
+      "checksums": {
+        "sha1": "b9c2c1bd7120d13da2d14ac6b0d3d80019d64f7a"
+      }
+    },
+    "zippy": {
+      "version": "0.10.19",
+      "vcsRevision": "bcb8c1e1be6abb0a0e35a3c6040cdd9391cc993f",
+      "url": "https://github.com/guzba/zippy",
+      "downloadMethod": "git",
+      "dependencies": [
+        "nim"
+      ],
+      "checksums": {
+        "sha1": "706d8c10778f32d28b060dbcc84143ca4bfb9bcd"
+      }
+    }
+  },
+  "tasks": {}
+}
