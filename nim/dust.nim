@@ -12,8 +12,9 @@
 ##    nim c -d:release -o:dust src/dust.nim
 ##    ./dust --size=20 --entropy=1.4 --lower ce1pct.fa.gz
 
-import parseopt, os, strutils
+import parseopt, streams, strutils, std/syncio
 import language_war / [fasta, dust]
+import zippy
 
 # -- CLI argument parsing --
 type
@@ -45,15 +46,18 @@ when isMainModule:
   if args.fastaPath.len == 0:
     quit "usage: dust [--size=N] [--entropy=F] [--lower] <fasta>", QuitFailure
 
-  let iter = if args.fastaPath == "-":
-      newFastaIterFromStdin()
+  let stream: Stream = 
+    if args.fastaPath == "-":
+      newFileStream(stdin)
     elif args.fastaPath.endsWith(".gz"):
-      newFastaIterFromGzFile(args.fastaPath)
+      var gzf = readFile(args.fastaPath)
+      var gzd = gzf.uncompress()
+      newStringStream(gzd)
     else:
-      newFastaIterFromFile(args.fastaPath)
+      openFileStream(args.fastaPath)
 
-  for rec in iter:
+  for rec in stream.fastaRecords:
     let masked = rec.dustMasked(args.windowSize, args.entropyThreshold,
                                 args.softMask)
     stdout.write $masked
-  iter.close()
+  stream.close()
