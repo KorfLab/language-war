@@ -140,4 +140,43 @@ rust/
     sequence.rs
 ```
 
+## Nim
+
+Status: in progress, `fasta` and `genotype` lib func done
+
+- [x] `fasta` iterator
+- [ ] `exons` extraction from SQLite 3
+- [ ] `params` de/serialize (with pretty printing)
+  - **Remarks:**
+- [ ] kmer counter
+- [ ] genotyping simulator: *partially*, library function OK, CLI not done
+- [ ] dust filter
+
+The Nim implementation also uses several packages. Notably, Nim does not have
+good streaming gz decompressor support.
+
+The library resides under the `language_war` directory. Binaries are in the root
+directory, and specified to be built in `language_war.nimble`.
+
+```tree
+nim/
+  language_war.nimble
+  nimble.lock
+  run.sh
+  xmake.lua
+  language_war/
+    collections.nim
+    dust.nim
+    fasta.nim
+    genotype.nim
+    hidden_markov.nim
+    kmer.nim
+    sequence.nim
+  dust.nim
+  exons.nim
+  genotype.nim
+  kmers.nim
+  params.nim
+```
+
 ## next languages...
