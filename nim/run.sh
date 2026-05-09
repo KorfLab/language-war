@@ -5,23 +5,19 @@ FASTA="../data/ce1pct.fa.gz"
 DB="../data/ce.db"
 JSON="../data/hmm.json"
 
-NIM_FLAGS="-d:release --outdir:."
+NIM_FLAGS="-d:release"
 
 echo "=== Building Nim binaries ==="
-nim c $NIM_FLAGS src/dust.nim
-nim c $NIM_FLAGS src/kmers.nim
-nim c $NIM_FLAGS src/genotype.nim
-nim c $NIM_FLAGS src/exons.nim
-nim c $NIM_FLAGS src/params.nim
+nimble build "$NIM_FLAGS"
 
 echo ""
 echo "=== Running Nim tools ==="
-./dust --size=20 --entropy=1.4 "$FASTA" > dust.out
-./kmers "$FASTA" 5 > kmers.out
-./kmers --anti "$FASTA" 5 > kmers_anti.out
-./genotype 1e6 8 --threads 8 > genotype.out
-./exons --db="$DB" > exons.out
-./params "$JSON" > params.out
+./bin/dust --size=20 --entropy=1.4 "$FASTA" > dust.out
+#./bin/kmers "$FASTA" 5 > kmers.out
+#./bin/kmers --anti "$FASTA" 5 > kmers_anti.out
+#./bin/genotype 1e6 8 --threads 8 > genotype.out
+#./bin/exons --db="$DB" > exons.out
+#./bin/params "$JSON" > params.out
 
 echo ""
 echo "=== Done ==="

@@ -12,9 +12,10 @@ bin = @[
 # "exons",
 # "params"
 ]
+binDir = "bin"
 
 # Dependencies
 
 requires "nim >= 2.2.0"
 requires "zippy ^= 0.10.19"
-requires "nclap"
+requires "yaclap ^= 0.1.0"
