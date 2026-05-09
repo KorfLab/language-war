@@ -7,8 +7,9 @@ import std/random
 import std/strformat
 
 ## Core (single-threaded)
-proc countGenotypes*(iterations: int, depth: int, errRate: float):
-    tuple[homoCounts: CountTable[string], heteroCounts: CountTable[string]] =
+proc countGenotypes*(
+    iterations: int, depth: int, errRate: float
+): tuple[homoCounts: CountTable[string], heteroCounts: CountTable[string]] =
   ## Simulate `iterations` homozygous and heterozygous genotype calls each,
   ## at the given sequencing `depth` and `errRate`.
   ##
@@ -26,7 +27,7 @@ proc countGenotypes*(iterations: int, depth: int, errRate: float):
     for _ in 1 .. depth:
       if rng.rand(1.0) < errRate:
         # Error: observe a different nucleotide
-        let nucleotide = rng.rand(1..3)
+        let nucleotide = rng.rand(1 .. 3)
         homObs[nucleotide] += 1
       else:
         # No error: observe the correct nucleotide (A)
@@ -37,13 +38,13 @@ proc countGenotypes*(iterations: int, depth: int, errRate: float):
 
   for _ in 1 .. iterations:
     var hetObs = [0, 0, 0, 0]
-    case rng.rand(0..1):
+    case rng.rand(0 .. 1)
     # from mom: 'A'
     of 0:
       for _ in 1 .. depth:
         if rng.rand(1.0) < errRate:
           # Error: observe a different nucleotide
-          let nucleotide = rng.rand(1..3)
+          let nucleotide = rng.rand(1 .. 3)
           hetObs[nucleotide] += 1
         else:
           # No error: observe the correct nucleotide (A)
@@ -53,14 +54,14 @@ proc countGenotypes*(iterations: int, depth: int, errRate: float):
       for _ in 1 .. depth:
         if rng.rand(1.0) < errRate:
           # Error: observe a different nucleotide
-          let nucleotide = rng.rand(0..2)
+          let nucleotide = rng.rand(0 .. 2)
           hetObs[nucleotide] += 1
         else:
           # No error: observe the correct nucleotide (T)
           hetObs[3] += 1
     else:
       assert false, "unreachable"
-    
+
     hetObs.sort(SortOrder.Descending)
     let sig = &"{hetObs[0]}.{hetObs[1]}.{hetObs[2]}.{hetObs[3]}"
     heteroCounts.inc(sig)
@@ -76,14 +77,17 @@ type GenotypeThreadArgs = object
 
 ## Thread wrapper for `countGenotypes`. Runs the function and sends results back
 proc countGenotypesThreadWrapper(args: GenotypeThreadArgs) {.thread.} =
-  let (homoCounts, heteroCounts) = countGenotypes(args.iterations, args.depth, args.errRate)
+  let (homoCounts, heteroCounts) =
+    countGenotypes(args.iterations, args.depth, args.errRate)
   args.homoCountsChannel[].send(homoCounts)
   args.heteroCountsChannel[].send(heteroCounts)
 
 ## Core (parallel)
-proc countGenotypesParallel*(iterations: int, depth: int, errRate: float,
-                             numThreads: int):
-    tuple[homoCounts: CountTable[string], heteroCounts: CountTable[string]] {.raises: [ResourceExhaustedError].} =
+proc countGenotypesParallel*(
+    iterations: int, depth: int, errRate: float, numThreads: int
+): tuple[homoCounts: CountTable[string], heteroCounts: CountTable[string]] {.
+    raises: [ResourceExhaustedError]
+.} =
   ## Threaded version of `countGenotypes`.
   ## Splits `iterations` evenly (remainder on the last thread), runs each
   ## chunk on a separate thread, then merges results.
@@ -92,12 +96,12 @@ proc countGenotypesParallel*(iterations: int, depth: int, errRate: float,
   var homoCounts = initCountTable[string]()
   var heteroCounts = initCountTable[string]()
 
-  let homoChannel = cast[ptr Channel[CountTable[string]]](
-    allocShared0(sizeof(Channel[CountTable[string]]))
-  )
-  let heteroChannel = cast[ptr Channel[CountTable[string]]](
-    allocShared0(sizeof(Channel[CountTable[string]]))
-  )
+  let homoChannel = cast[ptr Channel[CountTable[string]]](allocShared0(
+    sizeof(Channel[CountTable[string]])
+  ))
+  let heteroChannel = cast[ptr Channel[CountTable[string]]](allocShared0(
+    sizeof(Channel[CountTable[string]])
+  ))
 
   homoChannel[].open()
   heteroChannel[].open()
@@ -105,9 +109,18 @@ proc countGenotypesParallel*(iterations: int, depth: int, errRate: float,
   var threads: seq[Thread[GenotypeThreadArgs]] = @[]
 
   for i in 1 .. numThreads:
-    let threadIterations = if i == numThreads: perThread + remainder else: perThread
-    let args = GenotypeThreadArgs(iterations: threadIterations, depth: depth, errRate: errRate,
-                                   homoCountsChannel: homoChannel, heteroCountsChannel: heteroChannel)
+    let threadIterations =
+      if i == numThreads:
+        perThread + remainder
+      else:
+        perThread
+    let args = GenotypeThreadArgs(
+      iterations: threadIterations,
+      depth: depth,
+      errRate: errRate,
+      homoCountsChannel: homoChannel,
+      heteroCountsChannel: heteroChannel,
+    )
     var thread: Thread[GenotypeThreadArgs]
     thread.createThread(countGenotypesThreadWrapper, args)
     threads.add(thread)
@@ -117,7 +130,7 @@ proc countGenotypesParallel*(iterations: int, depth: int, errRate: float,
   for _ in 1 .. numThreads:
     let threadHomoCounts = homoChannel[].recv()
     let threadHeteroCounts = heteroChannel[].recv()
-    
+
     homoCounts.merge(threadHomoCounts)
     heteroCounts.merge(threadHeteroCounts)
 

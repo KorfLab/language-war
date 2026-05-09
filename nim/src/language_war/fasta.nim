@@ -12,8 +12,7 @@ type
     description*: string
     sequence*: string
 
-  FastaIterError* = object of CatchableError
-    ## Raised when reading a FASTA file fails.
+  FastaIterError* = object of CatchableError ## Raised when reading a FASTA file fails.
 
 # ---------------------------------------------------------------------------
 # FastaRecord
@@ -39,12 +38,12 @@ proc reverseComplement*(rec: FastaRecord): string =
 
 proc `$`*(rec: FastaRecord): string =
   ## Formats the record in FASTA format (60-character wrapped lines).
-  result.add ">" & rec.description & "\n"
+  result.add(">" & rec.description & "\n")
   var i = 0
   while i < rec.sequence.len:
     let chunkLen = min(60, rec.sequence.len - i)
-    result.add rec.sequence[i ..< i + chunkLen]
-    result.add "\n"
+    result.add(rec.sequence[i ..< i + chunkLen])
+    result.add("\n")
     i += chunkLen
 
 # ---------------------------------------------------------------------------
@@ -59,7 +58,8 @@ proc `$`*(rec: FastaRecord): string =
 ## *Note*: unlike the Rust implementation this iterator does not return
 ## ``Result`` — I/O errors are raised as `FastaIterError` exceptions.
 iterator fastaRecords*(stream: Stream): FastaRecord {.inline.} =
-  template err(msg: string) = raise newException(FastaIterError, msg)
+  template err(msg: string) =
+    raise newException(FastaIterError, msg)
 
   var sequence: Rope = nil
   var pendingDesc: Option[string] = none(string)
@@ -82,7 +82,7 @@ iterator fastaRecords*(stream: Stream): FastaRecord {.inline.} =
         continue
       else:
         sequence.add(lineBuffer)
-    
+
     # EOF: yield any pending record and finish
     if pendingDesc.isSome or sequence.isNil:
       yield newFastaRecord(pendingDesc.get(""), $sequence)

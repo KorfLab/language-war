@@ -3,8 +3,7 @@ import options
 import tables
 
 type
-  Vec2*[T] = object
-    ## Row-major matrix backed by a flat ``seq[T]``.
+  Vec2*[T] = object ## Row-major matrix backed by a flat ``seq[T]``.
     data: seq[T]
     cols: int
 
@@ -48,10 +47,14 @@ proc getPtr*[T](m: var Vec2[T], row, col: int): ptr T {.inline.} =
 proc set*[T](m: var Vec2[T], row, col: int, value: T) {.inline.} =
   m.data[row * m.cols + col] = value
 
-proc cols*[T](m: Vec2[T]): int {.inline.} = m.cols
+proc cols*[T](m: Vec2[T]): int {.inline.} =
+  m.cols
 
 proc rows*[T](m: Vec2[T]): int {.inline.} =
-  if m.cols == 0: 0 else: m.data.len div m.cols
+  if m.cols == 0:
+    0
+  else:
+    m.data.len div m.cols
 
 proc row*[T](m: Vec2[T], r: int): seq[T] =
   ## Return a copy of row `r`.
@@ -63,10 +66,8 @@ proc row*[T](m: Vec2[T], r: int): seq[T] =
 # ---------------------------------------------------------------------------
 
 proc initIndexedVec2*[R, C, T](
-    data: ptr Vec2[T],
-    rowIndices: ptr Table[R, int],
-    colIndices: ptr Table[C, int],
-  ): IndexedVec2[R, C, T] =
+    data: ptr Vec2[T], rowIndices: ptr Table[R, int], colIndices: ptr Table[C, int]
+): IndexedVec2[R, C, T] =
   IndexedVec2[R, C, T](data: data, rowIndices: rowIndices, colIndices: colIndices)
 
 proc get*[R, C, T](v: IndexedVec2[R, C, T], rowKey: R, colKey: C): Option[T] =
