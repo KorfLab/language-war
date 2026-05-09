@@ -8,7 +8,7 @@ installExt = @["nim"]
 bin = @[
   "dust",
 # "kmers",
-# "genotype",
+  "genotype",
 # "exons",
 # "params"
 ]
@@ -19,3 +19,4 @@ binDir = "bin"
 requires "nim >= 2.2.0"
 requires "zippy ^= 0.10.19"
 requires "yaclap ^= 0.1.0"
+requires "malebolgia ^= 1.3.2"

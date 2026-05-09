@@ -2,9 +2,9 @@
 
 import tables
 import algorithm
-import std/typedthreads
 import std/random
 import std/strformat
+import malebolgia
 
 ## Core (single-threaded)
 proc countGenotypes*(
@@ -68,25 +68,11 @@ proc countGenotypes*(
 
   result = (homoCounts, heteroCounts)
 
-type GenotypeThreadArgs = object
-  iterations: int
-  depth: int
-  errRate: float
-  homoCountsChannel: ptr Channel[CountTable[string]]
-  heteroCountsChannel: ptr Channel[CountTable[string]]
-
-## Thread wrapper for `countGenotypes`. Runs the function and sends results back
-proc countGenotypesThreadWrapper(args: GenotypeThreadArgs) {.thread.} =
-  let (homoCounts, heteroCounts) =
-    countGenotypes(args.iterations, args.depth, args.errRate)
-  args.homoCountsChannel[].send(homoCounts)
-  args.heteroCountsChannel[].send(heteroCounts)
-
 ## Core (parallel)
 proc countGenotypesParallel*(
     iterations: int, depth: int, errRate: float, numThreads: int
 ): tuple[homoCounts: CountTable[string], heteroCounts: CountTable[string]] {.
-    raises: [ResourceExhaustedError]
+    raises: [ResourceExhaustedError, ValueError]
 .} =
   ## Threaded version of `countGenotypes`.
   ## Splits `iterations` evenly (remainder on the last thread), runs each
@@ -96,48 +82,17 @@ proc countGenotypesParallel*(
   var homoCounts = initCountTable[string]()
   var heteroCounts = initCountTable[string]()
 
-  let homoChannel = cast[ptr Channel[CountTable[string]]](allocShared0(
-    sizeof(Channel[CountTable[string]])
-  ))
-  let heteroChannel = cast[ptr Channel[CountTable[string]]](allocShared0(
-    sizeof(Channel[CountTable[string]])
-  ))
+  var threadResults = newSeq[(CountTable[string], CountTable[string])](numThreads)
 
-  homoChannel[].open()
-  heteroChannel[].open()
+  var master = createMaster()
 
-  var threads: seq[Thread[GenotypeThreadArgs]] = @[]
+  master.awaitAll:
+    for i in 0 ..< numThreads:
+      let threadIterations = if i == numThreads - 1: perThread + remainder else: perThread
+      master.spawn countGenotypes(threadIterations, depth, errRate) -> threadResults[i]
 
-  for i in 1 .. numThreads:
-    let threadIterations =
-      if i == numThreads:
-        perThread + remainder
-      else:
-        perThread
-    let args = GenotypeThreadArgs(
-      iterations: threadIterations,
-      depth: depth,
-      errRate: errRate,
-      homoCountsChannel: homoChannel,
-      heteroCountsChannel: heteroChannel,
-    )
-    var thread: Thread[GenotypeThreadArgs]
-    thread.createThread(countGenotypesThreadWrapper, args)
-    threads.add(thread)
-
-  threads.joinThreads()
-
-  for _ in 1 .. numThreads:
-    let threadHomoCounts = homoChannel[].recv()
-    let threadHeteroCounts = heteroChannel[].recv()
-
-    homoCounts.merge(threadHomoCounts)
-    heteroCounts.merge(threadHeteroCounts)
-
-  # cleanup
-  homoChannel[].close()
-  heteroChannel[].close()
-  deallocShared(homoChannel)
-  deallocShared(heteroChannel)
+  for (homoResult, heteroResult) in threadResults:
+    homoCounts.merge(homoResult)
+    heteroCounts.merge(heteroResult)
 
   result = (homoCounts, heteroCounts)
