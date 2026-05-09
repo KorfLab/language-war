@@ -5,13 +5,12 @@ author        = "Shanoa Ice"
 description   = "KorfLab Language War libraries and binaries (Nim)"
 license       = "MIT"
 installExt = @["nim"]
-srcDir        = "src"
 bin = @[
   "dust",
-#  "kmers",
-#  "genotype",
-#  "exons",
-#  "params"
+# "kmers",
+# "genotype",
+# "exons",
+# "params"
 ]
 
 # Dependencies
