@@ -150,7 +150,7 @@ Status: in progress, `fasta` and `genotype` lib func done
   - **Remarks:**
 - [ ] kmer counter
 - [ ] genotyping simulator: *partially*, library function OK, CLI not done
-- [ ] dust filter
+- [x] dust filter
 
 The Nim implementation also uses several packages. Notably, Nim does not have
 good streaming gz decompressor support.

@@ -57,7 +57,7 @@ when isMainModule:
       openFileStream(args.fastaPath)
 
   for rec in stream.fastaRecords:
-    let masked = rec.dustMasked(args.windowSize, args.entropyThreshold,
+    let masked = rec.mask(args.windowSize, args.entropyThreshold,
                                 args.softMask)
     stdout.write $masked
   stream.close()
