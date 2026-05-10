@@ -43,9 +43,33 @@ fn main() -> std::io::Result<()> {
         args.threads,
     );
 
-    writeln!(output, "Counts\tHom\tHet\tP(hom)")?;
-
     let sigs: BTreeSet<_> = homo_count.keys().chain(hetero_count.keys()).collect();
+
+    // Compute column widths for alignment
+    let mut sig_width = 3usize;
+    let mut hom_width = 3usize;
+    let mut het_width = 3usize;
+    const PHOM_WIDTH: usize = 8;
+
+    for sig in &sigs {
+        sig_width = sig_width.max(sig.len());
+        let hom = homo_count.get(*sig).copied().unwrap_or(0);
+        let het = hetero_count.get(*sig).copied().unwrap_or(0);
+        hom_width = hom_width.max(hom.to_string().len());
+        het_width = het_width.max(het.to_string().len());
+    }
+
+    writeln!(output,
+        "{:<sig_width$} {:>hom_width$} {:>het_width$} {:>PHOM_WIDTH$}",
+        "Sig", "Hom", "Het", "P(hom)"
+    )?;
+    writeln!(output,
+        "{} {} {} {}",
+        "-".repeat(sig_width),
+        "-".repeat(hom_width),
+        "-".repeat(het_width),
+        "-".repeat(PHOM_WIDTH)
+    )?;
 
     for sig in sigs.iter().rev() {
         let hom = homo_count.get(*sig).copied().unwrap_or(0);
@@ -56,7 +80,10 @@ fn main() -> std::io::Result<()> {
         } else {
             0.0
         };
-        writeln!(output, "{}\t{}\t{}\t{}", sig, hom, het, p_hom)?;
+        writeln!(output,
+            "{:<sig_width$} {:>hom_width$} {:>het_width$} {:>PHOM_WIDTH$.4}",
+            sig, hom, het, p_hom
+        )?;
     }
 
     Ok(())
