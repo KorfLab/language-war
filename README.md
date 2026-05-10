@@ -142,21 +142,26 @@ rust/
 
 ## Nim
 
-Status: in progress, `fasta` and `genotype` lib func done
+Status: done
 
 - [x] `fasta` iterator
-- [ ] `exons` extraction from SQLite 3
-- [ ] `params` de/serialize (with pretty printing)
-  - **Remarks:**
-- [ ] kmer counter
-- [ ] genotyping simulator: *partially*, library function OK, CLI not done
+- [x] `exons` extraction from SQLite 3
+- [x] `params` de/serialize (with pretty printing)
+- [x] kmer counter
+- [x] genotyping simulator
 - [x] dust filter
 
 The Nim implementation also uses several packages. Notably, Nim does not have
-good streaming gz decompressor support.
+good streaming gz decompressor support, so I choose to use `zippy` and
+decompress in-memory. This is not good for very large fasta files.
+
+Additionally, Nim's default threading is quite difficult to use. Maleglobia is
+a good runtime which provides a easy interface, but if you need Channels between
+threads, they become tricky because of Nim's reference counting.
 
 The library resides under the `language_war` directory. Binaries are in the root
-directory, and specified to be built in `language_war.nimble`.
+directory, and specified to be built in `language_war.nimble`. Preferred build
+system is Nim's own `nimble`, but `atlas` also should work.
 
 ```tree
 nim/
