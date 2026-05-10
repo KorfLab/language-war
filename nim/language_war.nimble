@@ -7,7 +7,7 @@ license       = "MIT"
 installExt = @["nim"]
 bin = @[
   "dust",
-# "kmers",
+  "kmers",
   "genotype",
   "exons",
 # "params"

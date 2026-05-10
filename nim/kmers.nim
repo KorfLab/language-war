@@ -7,25 +7,28 @@
 ## Counts k-mers across all FASTA records, optionally counting both strands.
 ## Output format: ``kmer\\tcount\\tfrequency``
 
-import parseopt, os, strutils
-import language_war / [fasta, kmer]
+import parseopt, std/syncio, strutils, algorithm, streams, tables, sequtils
+import zippy
+import language_war/[fasta, kmer]
 
-type
-  CliArgs = object
-    fastaPath: string
-    k: int
-    anti: bool
+type CliArgs = object
+  fastaPath: string
+  k: int
+  anti: bool
 
 proc parseArgs(): CliArgs =
   var p = initOptParser()
   while true:
     p.next()
     case p.kind
-    of cmdEnd: break
+    of cmdEnd:
+      break
     of cmdShortOption, cmdLongOption:
       case p.key
-      of "anti": result.anti = true
-      else: discard
+      of "anti":
+        result.anti = true
+      else:
+        discard
     of cmdArgument:
       if result.fastaPath.len == 0:
         result.fastaPath = p.key
@@ -37,17 +40,21 @@ when isMainModule:
   if args.fastaPath.len == 0 or args.k == 0:
     quit "usage: kmers <fasta> <k> [--anti]", QuitFailure
 
-  let iter = if args.fastaPath == "-":
-      newFastaIterFromStdin()
+  let stream =
+    if args.fastaPath == "-":
+      newFileStream(stdin)
     elif args.fastaPath.endsWith(".gz"):
-      newFastaIterFromGzFile(args.fastaPath)
+      var gzf = readFile(args.fastaPath)
+      var gzd = gzf.uncompress()
+      newStringStream(gzd)
     else:
-      newFastaIterFromFile(args.fastaPath)
+      openFileStream(args.fastaPath)
 
   var records: seq[FastaRecord]
-  for rec in iter:
+  for rec in stream.fastaRecords():
     records.add(rec)
-  iter.close()
+
+  stream.close()
 
   let kmerCounts = countKmers(records, args.k, args.anti)
   var totalKmers = 0
