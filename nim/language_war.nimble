@@ -10,7 +10,7 @@ bin = @[
   "kmers",
   "genotype",
   "exons",
-# "params"
+  "params"
 ]
 binDir = "bin"
 
