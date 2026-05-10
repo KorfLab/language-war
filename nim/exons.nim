@@ -4,7 +4,8 @@
 ##
 ##   exons --db=<db_path>
 
-import parseopt, os, db_sqlite
+import parseopt, os, strutils
+import db_connector/db_sqlite
 
 type
   CliArgs = object

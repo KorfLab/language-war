@@ -16,7 +16,7 @@ echo "=== Running Nim tools ==="
 #./bin/kmers "$FASTA" 5 > kmers.out
 #./bin/kmers --anti "$FASTA" 5 > kmers_anti.out
 ./bin/genotype 1e6 8 --threads=8 > genotype.out
-#./bin/exons --db="$DB" > exons.out
+./bin/exons --db="$DB" > exons.out
 #./bin/params "$JSON" > params.out
 
 echo ""
