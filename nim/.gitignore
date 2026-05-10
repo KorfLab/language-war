@@ -1,0 +1,11 @@
+nimble.develop
+nimble.paths
+nimbledeps
+
+# Xmake cache
+.xmake/
+build/
+
+# compiled binaries
+bin/**/*
+!.gitkeep

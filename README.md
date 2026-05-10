@@ -214,4 +214,48 @@ rust/
     sequence.rs
 ```
 
+## Nim
+
+Status: done
+
+- [x] `fasta` iterator
+- [x] `exons` extraction from SQLite 3
+- [x] `params` de/serialize (with pretty printing)
+- [x] kmer counter
+- [x] genotyping simulator
+- [x] dust filter
+
+The Nim implementation also uses several packages. Notably, Nim does not have
+good streaming gz decompressor support, so I choose to use `zippy` and
+decompress in-memory. This is not good for very large fasta files.
+
+Additionally, Nim's default threading is quite difficult to use. Maleglobia is
+a good runtime which provides a easy interface, but if you need Channels between
+threads, they become tricky because of Nim's reference counting.
+
+The library resides under the `language_war` directory. Binaries are in the root
+directory, and specified to be built in `language_war.nimble`. Preferred build
+system is Nim's own `nimble`, but `atlas` also should work.
+
+```tree
+nim/
+  language_war.nimble
+  nimble.lock
+  run.sh
+  xmake.lua
+  language_war/
+    collections.nim
+    dust.nim
+    fasta.nim
+    genotype.nim
+    hidden_markov.nim
+    kmer.nim
+    sequence.nim
+  dust.nim
+  exons.nim
+  genotype.nim
+  kmers.nim
+  params.nim
+```
+
 ## next languages...
