@@ -54,6 +54,9 @@ pub fn build(b: *std.Build) void {
     // to our consumers. We must give it a name because a Zig package can expose
     // multiple modules and consumers will need to be able to specify which
     // module they want to access.
+
+    //const sqlite = b.dependency("sqlite", .{ .target = target, .optimization = optimize });
+
     const language_war = b.addModule("zig", .{
         // The root source file is the "entry point" of this module. Users of
         // this module will only be able to access public declarations contained
@@ -73,6 +76,8 @@ pub fn build(b: *std.Build) void {
     const genotype = languageWarExecutable(b, "genotype", target, optimize, language_war);
     const kmers = languageWarExecutable(b, "kmers", target, optimize, language_war);
     const params = languageWarExecutable(b, "params", target, optimize, language_war);
+
+    //params.root_module.addImport("sqlite", sqlite.module("sqlite"));
 
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default
