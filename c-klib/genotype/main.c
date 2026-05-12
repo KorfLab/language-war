@@ -2,13 +2,17 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <threads.h>
+#include <stdint.h>
 #include <time.h>
 
 #include "khash.h"
 #include "krng.h"
-#include "mylib.h"
 
-KHASH_MAP_INIT_INT(num_counts, uint32_t)
+KHASH_MAP_INIT_INT64(m64, int64_t)
+
+#define THREAD_COUNT 4
+#define NUMS_PER_THREAD 100
 
 static char *usage = "\
 usage: genotype [OPTIONS] <iterations> <depth>\n\
@@ -19,6 +23,8 @@ options:\n\
   -o  <path>   output file [stdout]\n\
   -h           show this message and exit\n\
 ";
+
+typedef  khash_t(m64)* count_t;
 
 typedef struct ProgramParameters {
 	double iterations;
@@ -47,7 +53,7 @@ program_t proc_cli(int argc, char **argv) {
 		}
 	}
 
-	if (argc == 3) {
+	if (argc - optind == 2) {
 		p->iterations = atof(argv[optind]);
 		p->depth = atoi(argv[optind+1]);
 	} else {
@@ -69,15 +75,15 @@ static int a4idxer(int a[4], int base) {
 			}
 		}
 	}
-	
-	int idx = 
-		a[0] * pow(base, 3) + 
+
+	int idx =
+		a[0] * pow(base, 3) +
 		a[1] * pow(base, 2) +
-		a[2] * pow(base, 1) + 
+		a[2] * pow(base, 1) +
 		a[3] * 1;
-	
+
 	return idx;
-} 
+}
 
 static void idx2abcd(int n, int base, int *a, int *b, int *c, int *d) {
 	*a = (n / (base * base * base)) % base;
@@ -86,14 +92,30 @@ static void idx2abcd(int n, int base, int *a, int *b, int *c, int *d) {
 	*d = n % base;
 }
 
-static khash_t(num_counts)* count_homozygous(program_t p, krng_t *rng) {
-	khash_t(num_counts) *h = kh_init(num_counts);
+typedef struct {
+	int       thread_id;
+	program_t program;
+	count_t   hom_hash;
+	count_t   het_hash;
+} ctx_t;
+
+
+int count_genotypes(void *arg) {
+	ctx_t *ctx = (ctx_t *)arg;
+	program_t p = ctx->program;
 	double limit = p->iterations / p->threads;
+	krng_t r;
+	uint64_t seed = (uintptr_t)ctx ^ (uint64_t)time(NULL);
+	kr_srand_r(&r, seed);
+
+	// homozygous
+	count_t hom = kh_init(m64);
+	if (!hom) thrd_exit(thrd_error);
 	for (int i = 0; i < limit; i++) {
 		int count[4] = {0, 0, 0, 0};
 		for (int j = 0; j < p->depth; j++) {
-			if (kr_drand_r(rng) < p->error) {
-				int nt = kr_rand_r(rng) % 3 + 1;
+			if (kr_drand_r(&r) < p->error) {
+				int nt = kr_rand_r(&r) % 3 + 1;
 				count[nt]++;
 			} else {
 				count[0]++;
@@ -101,31 +123,29 @@ static khash_t(num_counts)* count_homozygous(program_t p, krng_t *rng) {
 		}
 		int idx = a4idxer(count, p->depth +1);
 		int ret;
-		khiter_t k = kh_put(num_counts, h, idx, &ret);
-		if (ret) kh_value(h, k) = 1;
-		else     kh_value(h, k)++;
+		khiter_t k = kh_put(m64, hom, idx, &ret);
+		if (ret) kh_value(hom, k) = 1;
+		else     kh_value(hom, k)++;
 	}
-	
-	return h;
-}
+	ctx->hom_hash = hom;
 
-static khash_t(num_counts)* count_heterozygous(program_t p, krng_t *rng) {
-	khash_t(num_counts) *h = kh_init(num_counts);
-	double limit = p->iterations / p->threads;
+	// count homozygous
+	count_t het = kh_init(m64);
+	if (!het) thrd_exit(thrd_error);
 	for (int i = 0; i < limit; i++) {
 		int count[4] = {0, 0, 0, 0};
 		for (int j = 0; j < p->depth; j++) {
-			if (kr_rand_r(rng) % 2 == 0) {
-				if (kr_drand_r(rng) < p->error) {
-					int nt = kr_rand_r(rng) % 3 + 1; // not mom
+			if (kr_rand_r(&r) % 2 == 0) {
+				if (kr_drand_r(&r) < p->error) {
+					int nt = kr_rand_r(&r) % 3 + 1; // not mom
 					count[nt]++;
 				} else {
 					count[0]++; // mom
 				}
 			} else {
 				// dad is usually idx:3
-				if (kr_drand_r(rng) < p->error) {
-					int nt = kr_rand_r(rng) % 3; // not dad
+				if (kr_drand_r(&r) < p->error) {
+					int nt = kr_rand_r(&r) % 3; // not dad
 					count[nt]++;
 				} else {
 					count[3]++; // dad
@@ -134,55 +154,108 @@ static khash_t(num_counts)* count_heterozygous(program_t p, krng_t *rng) {
 		}
 		int idx = a4idxer(count, p->depth +1);
 		int ret;
-		khiter_t k = kh_put(num_counts, h, idx, &ret);
-		if (ret) kh_value(h, k) = 1;
-		else     kh_value(h, k)++;
+		khiter_t k = kh_put(m64, het, idx, &ret);
+		if (ret) kh_value(het, k) = 1;
+		else     kh_value(het, k)++;
 	}
-	
-	return h;
+	ctx->het_hash = het;
+
+	return thrd_success;
 }
 
-/*
-static size_t get_khash_mem(khash_t(num_counts) *h) {
-	size_t n = h->n_buckets;
-	size_t mem = sizeof(*h);
-	mem += n * sizeof(khint32_t);
-	mem += n * sizeof(int);
-	return mem;
+count_t hash_union(count_t h1, count_t h2) {
+	count_t res = kh_init(m64);
+	khiter_t k;
+	int ret;
+
+	// 1. Copy all from h1
+	for (k = kh_begin(h1); k != kh_end(h1); ++k) {
+		if (kh_exist(h1, k)) {
+			khiter_t it = kh_put(m64, res, kh_key(h1, k), &ret);
+			kh_val(res, it) = kh_val(h1, k);
+		}
+	}
+
+	// 2. Copy all from h2 (sum values if key already exists)
+	for (k = kh_begin(h2); k != kh_end(h2); ++k) {
+		if (kh_exist(h2, k)) {
+			khiter_t it = kh_put(m64, res, kh_key(h2, k), &ret);
+			if (ret == 0) {
+				// Key already existed from h1, sum them
+				kh_val(res, it) += kh_val(h2, k);
+			} else {
+				// New key from h2
+				kh_val(res, it) = kh_val(h2, k);
+			}
+		}
+	}
+
+	return res;
 }
-*/
 
 
 int main(int argc, char **argv) {
 	program_t p = proc_cli(argc, argv);
-	krng_t rng;
-	kr_srand_r(&rng, (uint64_t)time(NULL));
-	
-	printf("homozygous\n");
-	khash_t(num_counts) *hom = count_homozygous(p, &rng);
-	for (khiter_t it = kh_begin(hom); it != kh_end(hom); it++) {
-		if (!kh_exist(hom, it)) continue;
-		int k = kh_key(hom, it);
-		int v = kh_val(hom, it);
-		int a, b, c, d;
-		idx2abcd(k, p->depth+1, &a, &b, &c, &d);
-		
-		printf("%d %d %d %d: %d\n", a, b, c, d, v);
+	thrd_t * threads = malloc(sizeof(thrd_t) * THREAD_COUNT);
+	ctx_t * ctxs = malloc(sizeof(ctx_t) * THREAD_COUNT);
+
+	// execute threads
+	for (int i = 0; i < THREAD_COUNT; i++) {
+		ctxs[i].thread_id = i;
+		ctxs[i].program = p;
+		if (thrd_create(&threads[i], count_genotypes, &ctxs[i]) != thrd_success) {
+			return 1;
+		}
 	}
-	
-	khash_t(num_counts) *het = count_heterozygous(p, &rng);
-	printf("heterozygous\n");
-	for (khiter_t it = kh_begin(het); it != kh_end(het); it++) {
-		if (!kh_exist(het, it)) continue;
-		int k = kh_key(het, it);
-		int v = kh_val(het, it);
-		int a, b, c, d;
-		idx2abcd(k, p->depth+1, &a, &b, &c, &d);
-		
-		printf("%d %d %d %d: %d\n", a, b, c, d, v);
+	for (int i = 0; i < THREAD_COUNT; i++) thrd_join(threads[i], NULL);
+
+	// merge homs
+	count_t homs = kh_init(m64);
+	for (int i = 0; i < p->threads; i++) {
+		count_t hom = ctxs[i].hom_hash;
+		if (!hom) continue;
+		for (khiter_t k = kh_begin(hom); k != kh_end(hom); k++) {
+			if (kh_exist(hom, k)) {
+				int ret;
+				uint64_t key = kh_key(hom, k);
+				int64_t val = kh_val(hom, k);
+				khiter_t mk = kh_put(m64, homs, key, &ret);
+				if (ret > 0) kh_value(homs, mk) = val;
+				else kh_value(homs, mk) += val;
+			}
+		}
 	}
-	
-	//printf("%d %d\n", get_khash_mem(hom), get_khash_mem(het));
-	
+	// merge hets
+	count_t hets = kh_init(m64);
+	for (int i = 0; i < p->threads; i++) {
+		count_t het = ctxs[i].het_hash;
+		if (!het) continue;
+		for (khiter_t k = kh_begin(het); k != kh_end(het); k++) {
+			if (kh_exist(het, k)) {
+				int ret;
+				uint64_t key = kh_key(het, k);
+				int64_t val = kh_val(het, k);
+				khiter_t mk = kh_put(m64, hets, key, &ret);
+				if (ret > 0) kh_value(hets, mk) = val;
+				else kh_value(hets, mk) += val;
+			}
+		}
+	}
+
+	// outout - is bugged
+	count_t keys = hash_union(homs, hets);
+	for (khiter_t k = kh_begin(keys); k != kh_end(keys); k++) {
+		double hom = 0;
+		double het = 0;
+		if kh_exist(homs, k) hom = kh_val(homs, k);
+		if kh_exist(hets, k) het = kh_val(hets, k);
+		if (hom == 0 && het == 0) continue;
+		uint64_t key = kh_key(keys, k);
+		int a, b, c, d;
+		idx2abcd(key, p->depth+1, &a, &b, &c, &d);
+		printf("%d.%d.%d.%d\t%g\t%g\n", a, b, c, d, hom, het);
+	}
+
+
 	return 0;
 }
