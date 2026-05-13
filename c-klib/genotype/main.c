@@ -163,36 +163,15 @@ int count_genotypes(void *arg) {
 	return thrd_success;
 }
 
-count_t hash_union(count_t h1, count_t h2) {
-	count_t res = kh_init(m64);
-	khiter_t k;
-	int ret;
-
-	// 1. Copy all from h1
-	for (k = kh_begin(h1); k != kh_end(h1); ++k) {
-		if (kh_exist(h1, k)) {
-			khiter_t it = kh_put(m64, res, kh_key(h1, k), &ret);
-			kh_val(res, it) = kh_val(h1, k);
-		}
+static void hash_stats(count_t h) {
+	int full = 0;
+	int empty = 0;
+	for (khiter_t k = kh_begin(h); k != kh_end(h); k++) {
+		if (kh_exist(h, k)) full++;
+		else empty++;
 	}
-
-	// 2. Copy all from h2 (sum values if key already exists)
-	for (k = kh_begin(h2); k != kh_end(h2); ++k) {
-		if (kh_exist(h2, k)) {
-			khiter_t it = kh_put(m64, res, kh_key(h2, k), &ret);
-			if (ret == 0) {
-				// Key already existed from h1, sum them
-				kh_val(res, it) += kh_val(h2, k);
-			} else {
-				// New key from h2
-				kh_val(res, it) = kh_val(h2, k);
-			}
-		}
-	}
-
-	return res;
+	printf("full:%d empty:%d\n", full, empty);
 }
-
 
 int main(int argc, char **argv) {
 	program_t p = proc_cli(argc, argv);
@@ -242,18 +221,34 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	// outout - is bugged
-	count_t keys = hash_union(homs, hets);
-	for (khiter_t k = kh_begin(keys); k != kh_end(keys); k++) {
-		double hom = 0;
-		double het = 0;
-		if kh_exist(homs, k) hom = kh_val(homs, k);
-		if kh_exist(hets, k) het = kh_val(hets, k);
-		if (hom == 0 && het == 0) continue;
-		uint64_t key = kh_key(keys, k);
-		int a, b, c, d;
-		idx2abcd(key, p->depth+1, &a, &b, &c, &d);
-		printf("%d.%d.%d.%d\t%g\t%g\n", a, b, c, d, hom, het);
+	// create the same hash keys in both sets
+	for (khiter_t k = kh_begin(homs); k != kh_end(homs); k++) {
+		if (kh_exist(homs, k)) {
+			uint64_t key = kh_key(homs, k);
+			int ret;
+			khiter_t ki = kh_put(m64, hets, key, &ret);
+			if (ret) kh_value(hets, ki) = 0;
+		}
+	}
+	for (khiter_t k = kh_begin(hets); k != kh_end(hets); k++) {
+		if (kh_exist(hets, k)) {
+			uint64_t key = kh_key(hets, k);
+			int ret;
+			khiter_t ki = kh_put(m64, homs, key, &ret);
+			if (ret) kh_value(homs, ki) = 0;
+		}
+	}
+
+	// output
+	for (khiter_t k = kh_begin(hets); k != kh_end(hets); k++) {
+		if (kh_exist(hets, k)) {
+			uint64_t key = kh_key(homs, k);
+			int64_t vhom = kh_value(homs, k);
+			int64_t vhet = kh_value(hets, k);
+			int a, b, c, d;
+			idx2abcd(key, p->depth+1, &a, &b, &c, &d);
+			printf("%d.%d.%d.%d\t%ld\t%ld\n", a, b, c, d, vhom, vhet);
+		}
 	}
 
 
